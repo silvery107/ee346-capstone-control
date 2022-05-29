@@ -193,7 +193,7 @@ class Follower:
             # print(tvecs.squeeze()[-1])
             if tvecs.squeeze()[-1] < STOP_DISTANCE*10 and not self.stop and not self.stop_once:
                 self.stop = True
-                print("[Stop] Flag Triggered")
+                rospy.loginfo("[Stop] Flag Triggered")
                 self.timer = rospy.get_time()
 
         #### *Perspective Transform #####
@@ -283,15 +283,15 @@ class Follower:
             if match_corner(mask2, self.corner_templates):
                 if self.cross_counter == 1 and not self.start and not self.start_once:
                     self.start = True
-                    print("[Start] Flag Triggered")
+                    rospy.loginfo("[Start] Flag Triggered")
                 elif not self.cross_flag and not self.cross_once and self.start_once:
                     self.cross_counter += 1
-                    print("[Cross] Counts: %d"%self.cross_counter)
+                    rospy.loginfo("[Cross] Counts: %d"%self.cross_counter)
                     self.cross_flag = True
-                    print("[Cross] Flag Triggered")
+                    rospy.loginfo("[Cross] Flag Triggered")
                     if self.cross_counter == self.exit_counter_num and self.start_once:
                         self.exit = True
-                        print("[Exit] Flag Triggered")
+                        rospy.loginfo("[Exit] Flag Triggered")
 
             if self.mis_right and not self.mis_left:
                 cx2 = IMG_W - cx1 +10
@@ -304,14 +304,14 @@ class Follower:
         fpt_y = (cy1 + cy2)/2
 
         #### *Stop Logic #####        
-        if self.stop_once:
-            distance = np.linalg.norm((self.positions-self.stop_pos))
-            # print(distance)
-            if distance > STOP_DISTANCE:
-                self.stop_once = False
-                self.cross_counter = 1
-                print("[Cross] Refresh Counts: %d"%self.cross_counter)
-                print("[Stop] Refresh State")
+        # if self.stop_once:
+        #     distance = np.linalg.norm((self.positions-self.stop_pos))
+        #     # print(distance)
+        #     if distance > STOP_DISTANCE:
+        #         self.stop_once = False
+        #         self.cross_counter = 1
+        #         rospy.loginfo("[Cross] Refresh Counts: %d"%self.cross_counter)
+        #         rospy.loginfo("[Stop] Refresh State")
         
         #### *Crossing Logic #####
         if self.cross_flag:
@@ -323,7 +323,7 @@ class Follower:
             distance = np.linalg.norm((self.positions-self.cross_pos))
             if distance > CROSS_DISTANCE:
                 self.cross_once = False
-                print("[Cross] Refresh State")
+                rospy.loginfo("[Cross] Refresh State")
 
         #### *Execute Controller #####
         dx = self.filter_x.calculate_average(fpt_y/10.0)
