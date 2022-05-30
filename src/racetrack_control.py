@@ -372,14 +372,15 @@ class Follower:
         cv2.waitKey(1)
 
         #### *Following Status #####
-        if rospy.get_time() - self.timer>40:
+        if rospy.get_time() - self.timer>self.timeout:
             return FollowingStatus.LOST
         elif self.exit_once:
             return FollowingStatus.SUCCEEDED
         else:
             return FollowingStatus.ACTIVE
 
-    def initialize(self):
+    def initialize(self, timeout=40):
+        self.timeout = timeout
         return FollowingStatus.PENDING
 
 if __name__ == '__main__':

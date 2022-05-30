@@ -16,7 +16,7 @@ if __name__ == "__main__":
 
     # Initialize
     nav.set_initial_pose()
-    follower_status = follower.initialize()
+    follower_status = follower.initialize(timeout=40)
 
     # Start task sequences
     nav.move_goal(5)
