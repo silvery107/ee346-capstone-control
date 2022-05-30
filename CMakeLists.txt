@@ -158,7 +158,7 @@ include_directories(
 ## in contrast to setup.py, you can choose the destination
 catkin_install_python(PROGRAMS
   src/racetrack_control.py
-  # src/navigation_control.py
+  src/navigation_control.py
   # src/utils.py
   # src/moving_window_filter.py
   # src/controllers.py
