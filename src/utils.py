@@ -2,6 +2,13 @@ import cv2
 import numpy as np
 DTYPE = np.float32
 rot_90 = np.array([0,1,-1,0], dtype=DTYPE).reshape((2,2))
+from enum import Enum, auto
+
+class FollowingStatus(Enum):
+    ACTIVE = auto()
+    SUCCEEDED = auto()
+    LOST = auto()
+    PENDING = auto()
 
 def check_coord(coord):
     if coord[0]<0 and coord[1]<0:

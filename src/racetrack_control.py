@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+﻿#!/usr/bin/env python
 # -*- coding: UTF-8 -*-
 
 import rospy
@@ -10,10 +10,9 @@ from geometry_msgs.msg import Twist
 from nav_msgs.msg import Odometry
 from controllers import PIDController, NonholomonicController
 from moving_window_filter import MovingWindowFilter
-import Queue # this is for python 2
 import warnings
 warnings.simplefilter('ignore', np.RankWarning)
-from utils import check_coord, match_corner, get_lane_theta
+from utils import check_coord, match_corner, get_lane_theta, FollowingStatus
 from argparse import ArgumentParser
 
 ####################################################
@@ -72,7 +71,7 @@ class Follower:
         # Stop State
         self.stop = False
         self.stop_once = False
-        self.timer = 0.0
+        self.timer = None
         self.positions = np.zeros(3, dtype=DTYPE)
         self.stop_pos = None
 
@@ -81,7 +80,6 @@ class Follower:
         self.filter_x = MovingWindowFilter(1, dim=1)
         self.filter_y = MovingWindowFilter(1, dim=1)
         self.filter_t = MovingWindowFilter(2, dim=1)
-        self.cmd_queue = Queue.Queue(maxsize=10)
 
         # Turning State
         self.turn_left = False
@@ -118,7 +116,7 @@ class Follower:
         self.cmd_vel_pub.publish(self.stop_twist)
         self.stop_once = True
         self.exit_once = True
-        cv2.destroyAllWindows()
+        # cv2.destroyAllWindows()
         rospy.sleep(1)
         
     def print_state(self):
@@ -129,10 +127,10 @@ class Follower:
 
     def start_seq(self):
         self.start = False
-        self.twist.linear.x = 0.2
+        self.twist.linear.x = 0.18
         self.twist.angular.z = 0.0
         self.cmd_vel_pub.publish(self.twist)
-        rospy.sleep(2.3)
+        rospy.sleep(2.5)
         self.twist.linear.x = 0.0
         self.twist.angular.z = -1.5
         self.cmd_vel_pub.publish(self.twist)
@@ -175,6 +173,10 @@ class Follower:
         self.image = self.bridge.imgmsg_to_cv2(msg, desired_encoding='bgr8')
 
     def run(self):
+        if self.timer is None:
+            rospy.loginfo("Start lane following timer!")
+            self.timer = rospy.get_time()
+
         if self.image is None:
             rospy.loginfo("Waitting image...")
             rospy.sleep(1)
@@ -315,7 +317,7 @@ class Follower:
         #         self.cross_counter = 1
         #         rospy.loginfo("[Cross] Refresh Counts: %d"%self.cross_counter)
         #         rospy.loginfo("[Stop] Refresh State")
-        
+
         #### *Crossing Logic #####
         if self.cross_flag:
             self.cross_pos = self.positions.copy()
@@ -335,15 +337,6 @@ class Follower:
         v, omega = self.controller.apply(dx, dy, theta)
         self.twist.linear.x = 0.22 if not (self.turn_left or self.turn_right) else 0.18
         self.twist.angular.z = omega
-
-        #### *Delay Logic #####
-        # self.cmd_queue.put(omega)
-        # if self.cmd_queue.full():
-        #     omega_old = self.cmd_queue.get()
-        #     if self.turn_left or self.turn_right:
-        #         self.twist.angular.z = omega_old
-
-        #     self.cmd_queue.task_done()
 
         #### *Command Publish #####
         if not self.disable_motor:
@@ -377,6 +370,17 @@ class Follower:
         img_pair = np.concatenate((self.image, img_bird_view), axis=1)
         cv2.imshow("image", img_pair)
         cv2.waitKey(1)
+
+        #### *Following Status #####
+        if rospy.get_time() - self.timer>40:
+            return FollowingStatus.LOST
+        elif self.exit_once:
+            return FollowingStatus.SUCCEEDED
+        else:
+            return FollowingStatus.ACTIVE
+
+    def initialize(self):
+        return FollowingStatus.PENDING
 
 if __name__ == '__main__':
     # parser = ArgumentParser(prog="Racetrack Control")
