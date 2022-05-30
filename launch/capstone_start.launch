@@ -1,10 +1,11 @@
 <launch>
-    <arg name="map_file" default="$(env HOME)/map_lab.yaml"/>
+  <arg name="map_file" default="$(env HOME)/map_lab.yaml"/>
 
-    <include file="$(find turtlebot3_navigation)/launch/turtlebot3_navigation.launch">
-        <arg name="map_file" value="$(arg map_file)"/>
-    </include>
-    <include file="$(find turtlebot3_autorace_traffic_light_camera)/launch/turtlebot3_autorace_intrinsic_camera_calibration.launch"/>
-    <node pkg="ee346-capstone-control" name="cmd_sys" type="cmd_sys.py" />
+  <include file="$(find turtlebot3_navigation)/launch/turtlebot3_navigation.launch">
+    <arg name="map_file" value="$(arg map_file)"/>
+  </include>
+  <include file="$(find turtlebot3_autorace_traffic_light_camera)/launch/turtlebot3_autorace_intrinsic_camera_calibration.launch"/>
+
+  <!-- <node pkg="ee346-capstone-control" name="cmd_sys" type="cmd_sys.py" output="screen"/> -->
 
 </launch>

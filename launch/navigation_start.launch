@@ -1,11 +1,10 @@
 <launch>
-    <arg name="map_file" default="$(env HOME)/map_lab.yaml"/>
+  <arg name="map_file" default="$(env HOME)/map_lab.yaml"/>
 
-    <include file="$(find turtlebot3_navigation)/launch/turtlebot3_navigation.launch">
-        <arg name="map_file" value="$(arg map_file)"/>
-    </include>
+  <include file="$(find turtlebot3_navigation)/launch/turtlebot3_navigation.launch">
+    <arg name="map_file" value="$(arg map_file)"/>
+  </include>
 
-    <node pkg="ee346-capstone-control" name="navigation_control" type="navigation_control.py" />
-    <node pkg="ee346-capstone-control" name="racetrack_control" type="racetrack_control.py" />
+  <node pkg="ee346-capstone-control" name="navigation_control" type="navigation_control.py" output="screen"/>
 
 </launch>
