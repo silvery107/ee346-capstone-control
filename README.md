@@ -3,6 +3,7 @@
 ## Part I Lane Following
 
 ### TODO add timer and out of time exit, initialization func
+### TODO control screen printing
 1. Launch roscore on Remote PC.
     ```
     roscore
