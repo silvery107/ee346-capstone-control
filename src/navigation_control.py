@@ -20,8 +20,10 @@ goalPoints = [
     [(0.5313, 5.3832, 0.0), (0.0, 0.0, 0.9434, -0.3315)],   #pose of point3 index:2
     [(-2.3655, 2.4412, 0.0), (0.0, 0.0, -0.4172, 0.9088)],  #pose of point4 index:3
     [(0.5152, -0.5065, 0.0), (0.0, 0.0, 0.9334, 0.3587)],   #initial pose   index:4
-    [(0.6053, 0.7533, 0.0), (0.0, 0.0, 0.4026, 0.9153)],  #pose of start point   index:5
+    [(0.7053, 0.8533, 0.0), (0.0, 0.0, 0.4548, 0.9001)],  #pose of start point   index:5   0.3526 0.9453   0.4748 0.8801
 ]
+
+
 
 class AutoNav:
     def __init__(self):
@@ -98,9 +100,12 @@ class AutoNav:
 
 if __name__ == '__main__':
 
-    rospy.init_node("navController_class")
+    rospy.init_node("navController")
     cmd = AutoNav()
     cmd.set_initial_pose()
-    cmd.move_goal(1)
-    cmd.move_goal(2)
+    cmd.move_goal(5)
+    # cmd.move_goal(2)
+    # cmd.move_goal(3)
+    # cmd.move_goal(0)
+
     rospy.spin()

@@ -1,4 +1,5 @@
-﻿#!/usr/bin/env python
+#!/usr/bin/env python
+# -*- coding: UTF-8 -*-
 
 import rospy
 import cv2
@@ -15,10 +16,6 @@ warnings.simplefilter('ignore', np.RankWarning)
 from utils import check_coord, match_corner, get_lane_theta
 from argparse import ArgumentParser
 
-parser = ArgumentParser(prog="Racetrack Control")
-parser.add_argument('--disable-motor', action='store_true')
-parser.add_argument('--test-aruco', action='store_true')
-args = parser.parse_args()
 ####################################################
 # CONSTANTS
 DTYPE = np.float32
@@ -63,7 +60,7 @@ aruco_parameters = cv2.aruco.DetectorParameters_create()
 
 class Follower:
 
-    def __init__(self):
+    def __init__(self, disable_motor=False, test_aruco=False):
         # Components
         self.bridge = cv_bridge.CvBridge()
         self.image_sub = rospy.Subscriber('camera/image', Image, self.image_callback)
@@ -97,10 +94,9 @@ class Follower:
         self.cross_once = False
         self.cross_counter = 1
         self.cross_pos = None
-        self.corner_templates = [cv2.imread("templates/corner_template_squ.png", 0), 
-                                cv2.imread("templates/corner_template_rec.png", 0),
-                                cv2.imread("templates/corner_template_sharp.png", 0)]
-
+        self.corner_templates = [cv2.imread("/home/lab/catkin_ws/src/ee346-capstone-control/src/templates/corner_template_squ.png", 0), 
+                                cv2.imread("/home/lab/catkin_ws/src/ee346-capstone-control/src/templates/corner_template_rec.png", 0),
+                                cv2.imread("/home/lab/catkin_ws/src/ee346-capstone-control/src/templates/corner_template_sharp.png", 0)]
         # Start & Exit State
         self.start = False
         self.start_once = False
@@ -109,18 +105,20 @@ class Follower:
         self.exit_counter_num = 2
 
         # Testing Flag
-        self.disable_motor = args.disable_motor
-        self.test_aruco = args.test_aruco
+        self.disable_motor = disable_motor
+        self.test_aruco = test_aruco
         self.stop_twist = Twist()
         rospy.on_shutdown(self.shutdown_hook)
 
-        self.cmd_vel_pub.publish(self.stop_twist)
-        rospy.sleep(1)
+        # self.cmd_vel_pub.publish(self.stop_twist)
+        # rospy.sleep(1)
 
     def shutdown_hook(self):
         rospy.loginfo("Stopping the robot...")
         self.cmd_vel_pub.publish(self.stop_twist)
         self.stop_once = True
+        self.exit_once = True
+        cv2.destroyAllWindows()
         rospy.sleep(1)
         
     def print_state(self):
@@ -151,6 +149,10 @@ class Follower:
         self.twist.angular.z = -1.5
         self.cmd_vel_pub.publish(self.twist)
         rospy.sleep(1)
+        self.twist.linear.x = 0.2
+        self.twist.angular.z = 0.0
+        self.cmd_vel_pub.publish(self.twist)
+        rospy.sleep(4)
         self.exit_once = True
 
     def stop_seq(self):
@@ -281,6 +283,7 @@ class Follower:
             cy2 = cy1
         else:
             if match_corner(mask2, self.corner_templates):
+                rospy.loginfo("Corner Matched!")
                 if self.cross_counter == 1 and not self.start and not self.start_once:
                     self.start = True
                     rospy.loginfo("[Start] Flag Triggered")
@@ -357,9 +360,9 @@ class Follower:
 
         #### *Image Display #####
         cv2.namedWindow("masks")
-        cv2.moveWindow("masks", 200, 200+2*IMG_W)
+        cv2.moveWindow("masks", 50+2*IMG_W, 200)
         cv2.namedWindow("image")
-        cv2.moveWindow("image", 200, 200)
+        cv2.moveWindow("image", 50, 200)
         # cv2.imshow("BEV", img_bird_view)
         # cv2.imshow("HSV", img_hsv)
         cv2.imshow("masks", mask_add)
@@ -376,9 +379,15 @@ class Follower:
         cv2.waitKey(1)
 
 if __name__ == '__main__':
+    # parser = ArgumentParser(prog="Racetrack Control")
+    # parser.add_argument('--disable-motor', action='store_true')
+    # parser.add_argument('--test-aruco', action='store_true')
+    # args = parser.parse_args()
+
     rospy.init_node('lane_follower')
     ctrl_rate = rospy.Rate(25)
     follower = Follower()
+    # follower = Follower(args.disable_motor, args.test_aruco)
     while not follower.stop_once:
         follower.run()
         ctrl_rate.sleep()
