@@ -115,7 +115,7 @@ class Follower:
         self.aruco_parameters = cv2.aruco.DetectorParameters_create()
         self.corners = None
         self.ids = None
-        self.aruco_search = [False]*5
+        self.aruco_search = [False] * 5
         self.audio_filenames = ["audios/Aruco_Zero.mp3","audios/Aruco_One.mp3",
                                 "audios/Aruco_Two.mp3","audios/Aruco_Three.mp3",
                                 "audios/Aruco_Four.mp3"]
@@ -402,6 +402,7 @@ class Follower:
     def initialize(self, timeout=40):
         self.timeout = timeout
         self.following_status =  FollowingStatus.PENDING
+        self.aruco_search = [False] * 5
 
 if __name__ == '__main__':
     parser = ArgumentParser(prog="Racetrack Control")
