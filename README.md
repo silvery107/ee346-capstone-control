@@ -52,7 +52,7 @@
     python navigation_control.py
     ```
 
-### Integrated System
+## Integrated System
 1. Remote PC
     ```
     roscore
