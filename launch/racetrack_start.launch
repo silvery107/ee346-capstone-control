@@ -2,6 +2,6 @@
 
   <include file="$(find turtlebot3_autorace_traffic_light_camera)/launch/turtlebot3_autorace_intrinsic_camera_calibration.launch"/>
 
-  <node pkg="ee346-capstone-control" name="racetrack_control" type="racetrack_control.py" output="screen"/>
+  <!-- <node pkg="ee346-capstone-control" name="racetrack_control" type="racetrack_control.py" output="screen"/> -->
 
 </launch>
