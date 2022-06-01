@@ -13,6 +13,7 @@ from moving_window_filter import MovingWindowFilter
 import warnings
 warnings.simplefilter('ignore', np.RankWarning)
 from utils import check_coord, match_corner, get_lane_theta, FollowingStatus
+from playsound import playsound
 from argparse import ArgumentParser
 
 ####################################################
@@ -53,13 +54,12 @@ print(homography)
 
 # ArUco stuff
 ARUCO_TAG = cv2.aruco.DICT_6X6_50
-aruco_dictionary = cv2.aruco.Dictionary_get(ARUCO_TAG)
-aruco_parameters = cv2.aruco.DetectorParameters_create()
+ROOT_DIR = "/home/lab/catkin_ws/src/ee346-capstone-control/src/"
 ####################################################
 
 class Follower:
 
-    def __init__(self, disable_motor=False, test_aruco=False):
+    def __init__(self, display_image=False, disable_motor=False, test_aruco=False):
         # Components
         self.bridge = cv_bridge.CvBridge()
         self.image_sub = rospy.Subscriber('camera/image', Image, self.image_callback)
@@ -67,6 +67,7 @@ class Follower:
         self.cmd_vel_pub = rospy.Publisher('cmd_vel', Twist, queue_size=1) # 10
         self.twist = Twist()
         self.image = None
+        self.display_image = display_image
 
         # Stop State
         self.stop = False
@@ -92,15 +93,16 @@ class Follower:
         self.cross_once = False
         self.cross_counter = 1
         self.cross_pos = None
-        self.corner_templates = [cv2.imread("/home/lab/catkin_ws/src/ee346-capstone-control/src/templates/corner_template_squ.png", 0), 
-                                cv2.imread("/home/lab/catkin_ws/src/ee346-capstone-control/src/templates/corner_template_rec.png", 0),
-                                cv2.imread("/home/lab/catkin_ws/src/ee346-capstone-control/src/templates/corner_template_sharp.png", 0)]
+        self.corner_templates = [cv2.imread(ROOT_DIR + "templates/corner_template_squ.png", 0), 
+                                cv2.imread(ROOT_DIR + "templates/corner_template_rec.png", 0),
+                                cv2.imread(ROOT_DIR + "templates/corner_template_sharp.png", 0)]
         # Start & Exit State
         self.start = False
         self.start_once = False
         self.exit = False
         self.exit_once = False
         self.exit_counter_num = 2
+        self.following_status = FollowingStatus.INVALID
 
         # Testing Flag
         self.disable_motor = disable_motor
@@ -108,13 +110,20 @@ class Follower:
         self.stop_twist = Twist()
         rospy.on_shutdown(self.shutdown_hook)
 
-        # self.cmd_vel_pub.publish(self.stop_twist)
-        # rospy.sleep(1)
+        # Aruco Stuff
+        self.aruco_dictionary = cv2.aruco.Dictionary_get(ARUCO_TAG)
+        self.aruco_parameters = cv2.aruco.DetectorParameters_create()
+        self.corners = None
+        self.ids = None
+        self.aruco_search = [False]*5
+        self.audio_filenames = ["audios/Aruco_Zero.mp3","audios/Aruco_One.mp3",
+                                "audios/Aruco_Two.mp3","audios/Aruco_Three.mp3",
+                                "audios/Aruco_Four.mp3"]
 
     def shutdown_hook(self):
         rospy.loginfo("Stopping the robot...")
         self.cmd_vel_pub.publish(self.stop_twist)
-        self.stop_once = True
+        # self.stop_once = True
         self.exit_once = True
         # cv2.destroyAllWindows()
         rospy.sleep(1)
@@ -171,10 +180,21 @@ class Follower:
 
     def image_callback(self, msg):
         self.image = self.bridge.imgmsg_to_cv2(msg, desired_encoding='bgr8')
+        self.corners, self.ids, _ = cv2.aruco.detectMarkers(self.image, self.aruco_dictionary, parameters=self.aruco_parameters)
+        # print(self.ids)
+        if len(self.corners)>0:
+            aruco_id = self.ids.squeeze()
+            if not self.aruco_search[aruco_id]:
+                self.aruco_search[aruco_id] = True
+                playsound(ROOT_DIR + self.audio_filenames[aruco_id], block=False)
+
+        if not self.display_image:
+            cv2.imshow("Burger's View", self.image)
+            cv2.waitKey(1)
 
     def run(self):
         if self.timer is None:
-            rospy.loginfo("Start lane following timer!")
+            rospy.loginfo("Start racetrack timer!")
             self.timer = rospy.get_time()
 
         if self.image is None:
@@ -187,18 +207,15 @@ class Follower:
         self.mis_left = False
         self.mis_right = False
 
-        #### *ArUco Detection #####
-        # if self.cross_counter == 3 or self.test_aruco:
-        corners, ids, _ = cv2.aruco.detectMarkers(self.image, aruco_dictionary, parameters=aruco_parameters)
-
-        if len(corners) > 0:
-            cv2.aruco.drawDetectedMarkers(self.image, corners, ids)
-            _, tvecs = cv2.aruco.estimatePoseSingleMarkers(corners, 0.05, cameraMatrix, distCoeffs)
-            # print(tvecs.squeeze()[-1])
-            if tvecs.squeeze()[-1] < STOP_DISTANCE*10 and not self.stop and not self.stop_once:
-                self.stop = True
-                rospy.loginfo("[Stop] Flag Triggered")
-                self.timer = rospy.get_time()
+        #### *ArUco Pose Estimation #####
+        # if len(self.corners) > 0:
+        #     cv2.aruco.drawDetectedMarkers(self.image, self.corners, self.ids)
+        #     _, tvecs = cv2.aruco.estimatePoseSingleMarkers(self.corners, 0.05, cameraMatrix, distCoeffs)
+        #     # print(tvecs.squeeze()[-1])
+        #     if tvecs.squeeze()[-1] < STOP_DISTANCE*10 and not self.stop and not self.stop_once:
+        #         self.stop = True
+        #         rospy.loginfo("[Stop] Flag Triggered")
+        #         self.timer = rospy.get_time()
 
         #### *Perspective Transform #####
         img_bird_view = cv2.warpPerspective(self.image, homography, (IMG_W, IMG_H))
@@ -352,48 +369,56 @@ class Follower:
             self.cmd_vel_pub.publish(self.stop_twist)
 
         #### *Image Display #####
-        cv2.namedWindow("masks")
-        cv2.moveWindow("masks", 50+2*IMG_W, 200)
-        cv2.namedWindow("image")
-        cv2.moveWindow("image", 50, 200)
-        # cv2.imshow("BEV", img_bird_view)
-        # cv2.imshow("HSV", img_hsv)
-        cv2.imshow("masks", mask_add)
+        if self.display_image:
+            cv2.namedWindow("masks")
+            cv2.moveWindow("masks", 50+2*IMG_W, 200)
+            cv2.namedWindow("image")
+            cv2.moveWindow("image", 50, 200)
+            # cv2.imshow("BEV", img_bird_view)
+            # cv2.imshow("HSV", img_hsv)
+            cv2.imshow("masks", mask_add)
 
-        cv2.circle(img_bird_view, (int(cx1), int(cy1)), 10, (0, 255, 255), -1)
-        cv2.circle(img_bird_view, (int(cx2), int(cy2)), 10, (255, 255, 255), -1)
-        cv2.circle(img_bird_view, (int(fpt_x), int(fpt_y)), 10, (128, 128, 128), -1)
+            cv2.circle(img_bird_view, (int(cx1), int(cy1)), 10, (0, 255, 255), -1)
+            cv2.circle(img_bird_view, (int(cx2), int(cy2)), 10, (255, 255, 255), -1)
+            cv2.circle(img_bird_view, (int(fpt_x), int(fpt_y)), 10, (128, 128, 128), -1)
 
-        cv2.line(img_bird_view, (w/2-dy*5, h), (w/2-dy*5, h-dx*5), (0, 0, 255), 2)
-        cv2.line(img_bird_view, (w/2, h-2), (w/2-dy*5, h-2), (0, 0, 255), 2)
+            cv2.line(img_bird_view, (w/2-dy*5, h), (w/2-dy*5, h-dx*5), (0, 0, 255), 2)
+            cv2.line(img_bird_view, (w/2, h-2), (w/2-dy*5, h-2), (0, 0, 255), 2)
 
-        img_pair = np.concatenate((self.image, img_bird_view), axis=1)
-        cv2.imshow("image", img_pair)
-        cv2.waitKey(1)
+            img_pair = np.concatenate((self.image, img_bird_view), axis=1)
+            cv2.imshow("image", img_pair)
+            cv2.waitKey(1)
 
         #### *Following Status #####
         if rospy.get_time() - self.timer>self.timeout:
-            return FollowingStatus.LOST
+            rospy.loginfo("Racetrack LOST emm ...")
+            self.following_status = FollowingStatus.LOST
         elif self.exit_once:
-            return FollowingStatus.SUCCEEDED
+            rospy.loginfo("Racetrack SUCCEEDED!")
+            self.following_status = FollowingStatus.SUCCEEDED
         else:
-            return FollowingStatus.ACTIVE
+            self.following_status = FollowingStatus.ACTIVE
 
     def initialize(self, timeout=40):
         self.timeout = timeout
-        return FollowingStatus.PENDING
+        self.following_status =  FollowingStatus.PENDING
 
 if __name__ == '__main__':
-    # parser = ArgumentParser(prog="Racetrack Control")
-    # parser.add_argument('--disable-motor', action='store_true')
-    # parser.add_argument('--test-aruco', action='store_true')
-    # args = parser.parse_args()
+    parser = ArgumentParser(prog="Racetrack Control")
+    parser.add_argument('--disable-motor', action='store_true')
+    parser.add_argument('--test-aruco', action='store_true')
+    parser.add_argument('--display-image', action='store_true')
+    args = parser.parse_args()
 
     rospy.init_node('lane_follower')
     ctrl_rate = rospy.Rate(25)
-    follower = Follower()
-    # follower = Follower(args.disable_motor, args.test_aruco)
-    while not follower.stop_once:
+    # follower = Follower()
+    follower = Follower(args.display_image, args.disable_motor, args.test_aruco)
+    follower.initialize(timeout=40)
+
+    while not follower.exit_once:
         follower.run()
         ctrl_rate.sleep()
-    # rospy.spin()
+
+    cv2.destroyAllWindows()
+    rospy.spin()
