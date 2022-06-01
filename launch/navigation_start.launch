@@ -5,6 +5,6 @@
     <arg name="map_file" value="$(arg map_file)"/>
   </include>
 
-  <node pkg="ee346-capstone-control" name="navigation_control" type="navigation_control.py" output="screen"/>
+  <!-- <node pkg="ee346-capstone-control" name="navigation_control" type="navigation_control.py" output="screen"/> -->
 
 </launch>
