@@ -15,7 +15,7 @@ goalPoints = [
     # from point1 to point2, to point3, to point4 and then back to point1
     # position[XYZ] and pose[quaternion]
     # In our map of lab, X-direction is from bottom to top and Y-direction is from right to left
-    [(0.5152, -0.5065, 0.0), (0.0, 0.0, 0.9231, -0.3846)],  #pose of point1 index:0
+    [(0.5152, -0.5065, 0.0), (0.0, 0.0, 0.9231, 0.3846)],  #pose of point1 index:0
     [(3.3856, 2.5524, 0.0), (0.0, 0.0, 0.9334, 0.3587)],    #pose of point2 index:1
     [(0.5313, 5.3832, 0.0), (0.0, 0.0, 0.9434, -0.3315)],   #pose of point3 index:2
     [(-2.3655, 2.4412, 0.0), (0.0, 0.0, -0.4172, 0.9088)],  #pose of point4 index:3
@@ -84,16 +84,15 @@ class AutoNav:
         goal_pose.target_pose.pose.orientation.w = pose[1][3]
         return goal_pose
 
-    def move_goal(self, index, wait_time=60):
+    def move_goal(self, index, timeout=50):
         '''To send the move command and wait for the result'''
         goal = self.set_goal(index)
         self.moveBaseAction.send_goal(goal)
-        # wait_time = 60   #unit:seconds
-        rospy.loginfo("Begin to navigate autonomous to the point"+str(index+1))
-        finish_status = self.moveBaseAction.wait_for_result(rospy.Duration(wait_time))
+        rospy.loginfo("Begin to navigate to the point "+str(index+1))
+        finish_status = self.moveBaseAction.wait_for_result(rospy.Duration(timeout))
         if not finish_status:
             self.moveBaseAction.cancel_goal()
-            rospy.loginfo(str(wait_time)+" seconds time out without reaching the goal")
+            rospy.loginfo(str(timeout)+" seconds time out without reaching the goal")
         else:
             if self.moveBaseAction.get_state() == GoalStatus.SUCCEEDED:
                 rospy.loginfo("Arrive the point "+str(index+1))

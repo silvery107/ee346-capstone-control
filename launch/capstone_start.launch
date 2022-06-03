@@ -1,5 +1,5 @@
 <launch>
-  <arg name="map_file" default="$(env HOME)/map_lab.yaml"/>
+  <arg name="map_file" default="$(find ee346-capstone-control)/src/maps/map_lab.yaml"/>
 
   <include file="$(find turtlebot3_navigation)/launch/turtlebot3_navigation.launch">
     <arg name="map_file" value="$(arg map_file)"/>

@@ -14,21 +14,26 @@ if __name__ == "__main__":
     nav = AutoNav()
     follower = Follower()
 
-    # Initialize
+    # Initial pose estimation
     nav.set_initial_pose()
-    follower.initialize(timeout=40)
 
     # Start task sequences
+    # TODO add timers for each sub-task
+    # Round 1
     nav.move_goal(5)
-    while follower.following_status is not FollowingStatus.SUCCEEDED:
-        follower.run()
-        if follower.following_status is FollowingStatus.LOST:
-            break
-        ctrl_rate.sleep()
-
-    cv2.destroyAllWindows()
+    follower.run(timeout=39)
     nav.move_goal(2)
     nav.move_goal(3)
     nav.move_goal(1)
     nav.move_goal(0)
+
+    follower.refresh_aruco_search()
+    # Round 2
+    nav.move_goal(5)
+    follower.run(timeout=39)
+    nav.move_goal(2)
+    nav.move_goal(3)
+    nav.move_goal(1)
+    nav.move_goal(0)
+
     rospy.spin()

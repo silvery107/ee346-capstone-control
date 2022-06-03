@@ -67,46 +67,21 @@ class Follower:
         self.cmd_vel_pub = rospy.Publisher('cmd_vel', Twist, queue_size=1) # 10
         self.twist = Twist()
         self.image = None
-        self.display_image = display_image
-
-        # Stop State
-        self.stop = False
-        self.stop_once = False
-        self.timer = None
         self.positions = np.zeros(3, dtype=DTYPE)
-        self.stop_pos = None
 
-        # Controllers and filters
+        # Controllers
         self.controller = NonholomonicController(0.01, 1.0, 0.5, max_v=0.22, max_w=2.84)
-        self.filter_x = MovingWindowFilter(1, dim=1)
-        self.filter_y = MovingWindowFilter(1, dim=1)
-        self.filter_t = MovingWindowFilter(2, dim=1)
 
-        # Turning State
-        self.turn_left = False
-        self.turn_right = False
-        self.mis_left = False
-        self.mis_right = False
-
-        # Crossing State
-        self.cross_flag = False
-        self.cross_once = False
-        self.cross_counter = 1
-        self.cross_pos = None
         self.corner_templates = [cv2.imread(ROOT_DIR + "templates/corner_template_squ.png", 0), 
                                 cv2.imread(ROOT_DIR + "templates/corner_template_rec.png", 0),
                                 cv2.imread(ROOT_DIR + "templates/corner_template_sharp.png", 0)]
-        # Start & Exit State
-        self.start = False
-        self.start_once = False
-        self.exit = False
-        self.exit_once = False
-        self.exit_counter_num = 2
+
         self.following_status = FollowingStatus.INVALID
 
         # Testing Flag
         self.disable_motor = disable_motor
         self.test_aruco = test_aruco
+        self.display_image = display_image
         self.stop_twist = Twist()
         rospy.on_shutdown(self.shutdown_hook)
 
@@ -119,6 +94,40 @@ class Follower:
         self.audio_filenames = ["audios/Aruco_Zero.mp3","audios/Aruco_One.mp3",
                                 "audios/Aruco_Two.mp3","audios/Aruco_Three.mp3",
                                 "audios/Aruco_Four.mp3"]
+
+    def initialize(self, timeout=40):
+        self.timeout = timeout
+        self.following_status =  FollowingStatus.PENDING
+
+        # Stop State
+        self.stop = False
+        self.stop_once = False
+        self.timer = None
+        self.stop_pos = None
+
+        # Turning State
+        self.turn_left = False
+        self.turn_right = False
+        self.mis_left = False
+        self.mis_right = False
+
+        # Filters
+        self.filter_x = MovingWindowFilter(1, dim=1)
+        self.filter_y = MovingWindowFilter(1, dim=1)
+        self.filter_t = MovingWindowFilter(2, dim=1)
+
+        # Crossing State
+        self.cross_flag = False
+        self.cross_once = False
+        self.cross_counter = 1
+        self.cross_pos = None
+
+        # Start & Exit State
+        self.start = False
+        self.start_once = False
+        self.exit = False
+        self.exit_once = False
+        self.exit_counter_num = 2
 
     def shutdown_hook(self):
         rospy.loginfo("Stopping the robot...")
@@ -187,12 +196,16 @@ class Follower:
             if not self.aruco_search[aruco_id]:
                 self.aruco_search[aruco_id] = True
                 playsound(ROOT_DIR + self.audio_filenames[aruco_id], block=False)
+                rospy.loginfo("Aruco marker detected. ID "+ str(aruco_id))
 
         if not self.display_image:
             cv2.imshow("Burger's View", self.image)
             cv2.waitKey(1)
 
-    def run(self):
+    def refresh_aruco_search(self):
+        self.aruco_search = [False] * 5
+
+    def run_once(self):
         if self.timer is None:
             rospy.loginfo("Start racetrack timer!")
             self.timer = rospy.get_time()
@@ -399,10 +412,15 @@ class Follower:
         else:
             self.following_status = FollowingStatus.ACTIVE
 
-    def initialize(self, timeout=40):
-        self.timeout = timeout
-        self.following_status =  FollowingStatus.PENDING
-        self.aruco_search = [False] * 5
+    def run(self, timeout=40):
+        self.initialize(timeout)
+        ctrl_rate = rospy.Rate(25)
+        while self.following_status is not FollowingStatus.SUCCEEDED:
+            self.run_once()
+            if self.following_status is FollowingStatus.LOST:
+                break
+            ctrl_rate.sleep()
+        
 
 if __name__ == '__main__':
     parser = ArgumentParser(prog="Racetrack Control")
@@ -418,8 +436,8 @@ if __name__ == '__main__':
     follower.initialize(timeout=40)
 
     while not follower.exit_once:
-        follower.run()
+        follower.run_once()
         ctrl_rate.sleep()
 
-    cv2.destroyAllWindows()
+    # cv2.destroyAllWindows()
     rospy.spin()
