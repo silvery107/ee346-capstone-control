@@ -91,19 +91,18 @@ class Follower:
         self.corners = None
         self.ids = None
         self.aruco_search = [False] * 5
-        self.audio_filenames = ["audios/Aruco_Zero.mp3","audios/Aruco_One.mp3",
-                                "audios/Aruco_Two.mp3","audios/Aruco_Three.mp3",
+        self.audio_filenames = ["audios/Aruco_Zero.mp3", "audios/Aruco_One.mp3",
+                                "audios/Aruco_Two.mp3", "audios/Aruco_Three.mp3",
                                 "audios/Aruco_Four.mp3"]
 
-    def initialize(self, timeout=40):
-        self.timeout = timeout
+    def initialize(self, param_dic=dict()):
+        self.timeout = param_dic.get("timeout", 40)
         self.following_status =  FollowingStatus.PENDING
 
-        # Stop State
-        self.stop = False
-        self.stop_once = False
-        self.timer = None
-        self.stop_pos = None
+        # Filters
+        self.filter_x = MovingWindowFilter(1, dim=1)
+        self.filter_y = MovingWindowFilter(1, dim=1)
+        self.filter_t = MovingWindowFilter(2, dim=1)
 
         # Turning State
         self.turn_left = False
@@ -111,23 +110,24 @@ class Follower:
         self.mis_left = False
         self.mis_right = False
 
-        # Filters
-        self.filter_x = MovingWindowFilter(1, dim=1)
-        self.filter_y = MovingWindowFilter(1, dim=1)
-        self.filter_t = MovingWindowFilter(2, dim=1)
+        # Start & Exit State
+        self.start = False
+        self.start_once = param_dic.get("start_once", False)
+        self.exit = False
+        self.exit_once = False
+        self.exit_counter_num = param_dic.get("exit_counter_num", 2)
+
+        # Stop State
+        self.stop = False
+        self.stop_once = False
+        self.timer = None
+        self.stop_pos = None
 
         # Crossing State
         self.cross_flag = False
         self.cross_once = False
         self.cross_counter = 1
         self.cross_pos = None
-
-        # Start & Exit State
-        self.start = False
-        self.start_once = False
-        self.exit = False
-        self.exit_once = False
-        self.exit_counter_num = 2
 
     def shutdown_hook(self):
         rospy.loginfo("Stopping the robot...")
@@ -173,14 +173,21 @@ class Follower:
 
     def stop_seq(self):
         self.stop = False
-        self.twist.linear.x = 0.2
-        self.twist.angular.z = 0.0
-        self.cmd_vel_pub.publish(self.twist)
-        rospy.sleep(2)
+        # self.twist.linear.x = 0.2
+        # self.twist.angular.z = 0.0
+        # self.cmd_vel_pub.publish(self.twist)
+        # rospy.sleep(2)
         self.cmd_vel_pub.publish(self.stop_twist)
         rospy.sleep(STOP_TIME)
         self.stop_once = True
         self.stop_pos = self.positions.copy()
+
+    def rotate_seq(self, time=2, speed=2.84):
+        self.twist.linear.x = 0.0
+        self.twist.angular.z = speed
+        self.cmd_vel_pub.publish(self.twist)
+        rospy.sleep(time)
+        self.cmd_vel_pub.publish(self.stop_twist)
 
     def odom_callback(self, msg):
         self.positions[0] = msg.pose.pose.position.x
@@ -365,7 +372,7 @@ class Follower:
         dy = self.filter_y.calculate_average(w/2 - fpt_x)
 
         v, omega = self.controller.apply(dx, dy, theta)
-        self.twist.linear.x = 0.22 if not (self.turn_left or self.turn_right) else 0.18
+        self.twist.linear.x = 0.22 #if not (self.turn_left or self.turn_right) else 0.15
         self.twist.angular.z = omega
 
         #### *Command Publish #####
@@ -403,17 +410,20 @@ class Follower:
             cv2.waitKey(1)
 
         #### *Following Status #####
-        if rospy.get_time() - self.timer>self.timeout:
+        current_time = rospy.get_time() - self.timer
+        if current_time>self.timeout:
             rospy.loginfo("Racetrack LOST emm ...")
+            rospy.loginfo("And spent %.2f s..."%(current_time))
             self.following_status = FollowingStatus.LOST
         elif self.exit_once:
             rospy.loginfo("Racetrack SUCCEEDED!")
+            rospy.loginfo("And spent %.2f s..."%(current_time))
             self.following_status = FollowingStatus.SUCCEEDED
         else:
             self.following_status = FollowingStatus.ACTIVE
 
-    def run(self, timeout=40):
-        self.initialize(timeout)
+    def run(self, param_dic=dict()):
+        self.initialize(param_dic)
         ctrl_rate = rospy.Rate(25)
         while self.following_status is not FollowingStatus.SUCCEEDED:
             self.run_once()
@@ -430,14 +440,11 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     rospy.init_node('lane_follower')
-    ctrl_rate = rospy.Rate(25)
+    # ctrl_rate = rospy.Rate(25)
     # follower = Follower()
     follower = Follower(args.display_image, args.disable_motor, args.test_aruco)
-    follower.initialize(timeout=40)
-
-    while not follower.exit_once:
-        follower.run_once()
-        ctrl_rate.sleep()
+    follower.run({"timeout":39})
+    follower.stop_seq()
 
     # cv2.destroyAllWindows()
     rospy.spin()
