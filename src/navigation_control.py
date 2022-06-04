@@ -15,12 +15,13 @@ goalPoints = [
     # from point1 to point2, to point3, to point4 and then back to point1
     # position[XYZ] and pose[quaternion]
     # In our map of lab, X-direction is from bottom to top and Y-direction is from right to left
-    [(0.5152, -0.5065, 0.0), (0.0, 0.0, 0.9231, 0.3846)],  #pose of point1 index:0
+    [(0.5152, -0.5065, 0.0), (0.0, 0.0, 0.9231, 0.3846)],  #pose of point1 index:0  0.9231, 0.3846
     [(3.3856, 2.5524, 0.0), (0.0, 0.0, 0.9334, 0.3587)],    #pose of point2 index:1
     [(0.5313, 5.3832, 0.0), (0.0, 0.0, 0.9434, -0.3315)],   #pose of point3 index:2
     [(-2.3655, 2.4412, 0.0), (0.0, 0.0, -0.4172, 0.9088)],  #pose of point4 index:3
     [(0.5152, -0.5065, 0.0), (0.0, 0.0, 0.9334, 0.3587)],   #initial pose   index:4
     [(0.7053, 0.8533, 0.0), (0.0, 0.0, 0.4548, 0.9001)],  #pose of start point   index:5   0.3526 0.9453   0.4748 0.8801
+    [(3.0036, 2.7821, 0.0),(0.0, 0.0, 0.9231, 0.3846)]    #pose of back point   index:6 
 ]
 
 
@@ -88,14 +89,27 @@ class AutoNav:
         '''To send the move command and wait for the result'''
         goal = self.set_goal(index)
         self.moveBaseAction.send_goal(goal)
-        rospy.loginfo("Begin to navigate to the point "+str(index+1))
+        if index == 5:
+            rospy.loginfo("Begin to navigate to the start point of navigation...")
+        elif index == 6:
+            rospy.loginfo("Begin to come back for the racetrack...")
+        else:
+            rospy.loginfo("Begin to navigate to the point %d..."%(index+1))
+        begin_time = rospy.get_time()
         finish_status = self.moveBaseAction.wait_for_result(rospy.Duration(timeout))
         if not finish_status:
             self.moveBaseAction.cancel_goal()
-            rospy.loginfo(str(timeout)+" seconds time out without reaching the goal")
+            rospy.loginfo(str(timeout)+" seconds time out without reaching the goal...")
         else:
             if self.moveBaseAction.get_state() == GoalStatus.SUCCEEDED:
-                rospy.loginfo("Arrive the point "+str(index+1))
+                end_time = rospy.get_time()
+                times = end_time - begin_time
+                if index == 5:
+                    rospy.loginfo("Arrive the start point of navigation. And spent %.2f s..."%(times))
+                elif index == 6:
+                    rospy.loginfo("Arrive the back point of racetrack. And spent %.2f s..."%(times))
+                else:
+                    rospy.loginfo("Arrive the point %d. And spent %.2f s..."%(index+1, times))
 
 if __name__ == '__main__':
 
