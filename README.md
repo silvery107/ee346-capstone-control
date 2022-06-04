@@ -60,12 +60,14 @@
 
 1. SBC
     ```bash
+    sudo /etc/init.d/ntp restart
     roslaunch turtlebot3_bringup turtlebot3_robot.launch
     roslaunch turtlebot3_autorace_traffic_light_camera turtlebot3_autorace_camera_pi.launch
     ```
 
 2. Remote PC
     ```bash
+    sudo /etc/init.d/ntp restart
     roslaunch ee346-capstone-control capstone_start.launch
     python cmd_sys.py
     ```
