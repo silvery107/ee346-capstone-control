@@ -25,6 +25,7 @@ if __name__ == "__main__":
     nav.move_goal(2) #point3
     nav.move_goal(3) #point4
     # nav.move_goal(7) #search point for aruco
+    nav.move_goal(7) #search for a mid-connection point
     nav.move_goal(0) #point1
 
 
@@ -38,6 +39,7 @@ if __name__ == "__main__":
     nav.move_goal(2) #point3
     nav.move_goal(3) #point4
     # nav.move_goal(7) #search point for aruco
+    nav.move_goal(7) #search for a mid-connection point
     nav.move_goal(0) #point1
 
 
@@ -45,6 +47,7 @@ if __name__ == "__main__":
     follower.refresh_aruco_search()
     nav.move_goal(5) #start point of racetrack
     follower.run({"timeout":39})
+    nav.move_goal(3) 
     follower.stop_seq()
 
     # TEST
