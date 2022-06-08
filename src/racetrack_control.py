@@ -63,7 +63,7 @@ class Follower:
         # Components
         self.bridge = cv_bridge.CvBridge()
         self.image_sub = rospy.Subscriber('camera/image', Image, self.image_callback)
-        self.odom_sub = rospy.Subscriber('odom', Odometry, self.odom_callback)
+        # self.odom_sub = rospy.Subscriber('odom', Odometry, self.odom_callback)
         self.cmd_vel_pub = rospy.Publisher('cmd_vel', Twist, queue_size=1) # 10
         self.twist = Twist()
         self.image = None
@@ -133,7 +133,8 @@ class Follower:
         rospy.loginfo("Stopping the robot...")
         self.cmd_vel_pub.publish(self.stop_twist)
         # self.stop_once = True
-        self.exit_once = True
+        # self.exit_once = True
+        self.following_status = FollowingStatus.LOST
         # cv2.destroyAllWindows()
         rospy.sleep(1)
         
