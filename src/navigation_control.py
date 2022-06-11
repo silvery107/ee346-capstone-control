@@ -123,10 +123,4 @@ if __name__ == '__main__':
     cmd.move_goal(3)
     cmd.move_goal(0)
 
-    cmd.move_goal(5)
-    cmd.move_goal(1)
-    cmd.move_goal(2)
-    cmd.move_goal(3)
-    cmd.move_goal(0)
-
     rospy.spin()
