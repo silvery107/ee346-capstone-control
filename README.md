@@ -47,6 +47,7 @@
     ```
 
 3. Remote PC
+    First you need to generate a corresponding map in the $HOME
     ```bash
     roslaunch turtlebot3_navigation turtlebot3_navigation.launch map_file:=$HOME/map_lab.yaml
     python navigation_control.py
