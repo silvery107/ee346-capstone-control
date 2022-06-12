@@ -15,13 +15,13 @@ goalPoints = [
     # from point1 to point2, to point3, to point4 and then back to point1
     # position[XYZ] and pose[quaternion]
     # In our map of lab, X-direction is from bottom to top and Y-direction is from right to left
-    [(0.5152, -0.5065, 0.0), (0.0, 0.0, 0.9231, 0.3846)],  #pose of point1 index:0  0.9231, 0.3846
-    [(3.3856, 2.5524, 0.0), (0.0, 0.0, 0.9334, 0.3587)],    #pose of point2 index:1
-    [(0.5313, 5.3832, 0.0), (0.0, 0.0, 0.9434, -0.3315)],   #pose of point3 index:2
-    [(-2.3655, 2.4412, 0.0), (0.0, 0.0, -0.4172, 0.9088)],  #pose of point4 index:3
-    [(0.5152, -0.5065, 0.0), (0.0, 0.0, 0.9334, 0.3587)],   #initial pose   index:4
-    [(0.7053, 0.8533, 0.0), (0.0, 0.0, 0.4548, 0.9001)],  #pose of start point   index:5   0.3526 0.9453   0.4748 0.8801
-    [(3.0036, 2.7821, 0.0),(0.0, 0.0, 0.9231, 0.3846)],    #pose of back point   index:6 
+    [(0.5152, -0.5065, 0.0), (0.0, 0.0, 0.9231, 0.3846)],  #pose of point1           index:0 
+    [(3.3856, 2.5524, 0.0), (0.0, 0.0, 0.9334, 0.3587)],    #pose of point2          index:1
+    [(0.5313, 5.3832, 0.0), (0.0, 0.0, 0.9434, -0.3315)],   #pose of point3          index:2
+    [(-2.3655, 2.4412, 0.0), (0.0, 0.0, -0.4172, 0.9088)],  #pose of point4          index:3
+    [(0.5152, -0.5065, 0.0), (0.0, 0.0, 0.9334, 0.3587)],   #initial pose            index:4
+    [(0.7053, 0.8533, 0.0), (0.0, 0.0, 0.4548, 0.9001)],  #pose of start point       index:5
+    [(3.0036, 2.7821, 0.0),(0.0, 0.0, 0.9231, 0.3846)],    #pose of back point       index:6 
     [(0.8150, 2.2899, 0.0), (0.0, 0.0, -0.4003, 0.9163)]  #pose of mid-connect point index:7 
 ]
 
@@ -117,12 +117,6 @@ if __name__ == '__main__':
     rospy.init_node("navController")
     cmd = AutoNav()
     cmd.set_initial_pose()
-    cmd.move_goal(5)
-    cmd.move_goal(1)
-    cmd.move_goal(2)
-    cmd.move_goal(3)
-    cmd.move_goal(0)
-
     cmd.move_goal(5)
     cmd.move_goal(1)
     cmd.move_goal(2)
