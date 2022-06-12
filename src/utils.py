@@ -32,7 +32,7 @@ def get_lane_theta(mask, kernel):
         if np.isclose(np.abs(theta), np.pi/2, 1e-4):
             theta = 0.0
 
-    return theta
+    return theta #, line_param
 
 def match_corner(img, templates):
 

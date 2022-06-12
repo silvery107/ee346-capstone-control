@@ -312,7 +312,7 @@ class Follower:
             self.mis_right = True
             # print("Miss Right")
 
-        #### *Desition Logic #####
+        #### *Decision Logic #####
         # TODO tuning turn center
         # self.print_state()
         if self.turn_left:
@@ -346,7 +346,7 @@ class Follower:
         fpt_x = (cx1 + cx2)/2
         fpt_y = (cy1 + cy2)/2
 
-        #### *Stop Logic #####        
+        #### *Stop Logic #####
         # if self.stop_once:
         #     distance = np.linalg.norm((self.positions-self.stop_pos))
         #     # print(distance)
