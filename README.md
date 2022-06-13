@@ -1,7 +1,7 @@
 # EE346 Capstone Control
 
 
-There is the link to lab report website⭐https://sites.google.com/view/ee346-capstone-22s-group2/home
+There is the link to lab report website⭐https://sites.google.com/view/ee346-capstone-22s-cmdzyl/home
 
 
 ## Lane Following
