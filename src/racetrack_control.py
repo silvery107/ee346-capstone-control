@@ -268,8 +268,8 @@ class Follower:
         mask_add = cv2.morphologyEx(mask_add, cv2.MORPH_OPEN, kernel, iterations=3)
 
         #### *Calc Lane Orientation #####
-        theta1 = get_lane_theta(mask1, kernel)
-        theta2 = get_lane_theta(mask2, kernel)
+        theta1, line_l = get_lane_theta(mask1, kernel)
+        theta2, line_r = get_lane_theta(mask2, kernel)
         theta = 0.0
 
         if abs(theta1) > abs(theta2) and abs(theta1) > 0.3:
@@ -398,6 +398,9 @@ class Follower:
             # cv2.imshow("BEV", img_bird_view)
             # cv2.imshow("HSV", img_hsv)
             cv2.imshow("masks", mask_add)
+
+            cv2.line(img_bird_view, (line_l[2]-200*line_l[0], line_l[3]-200*line_l[1]), (line_l[2]+200*line_l[0], line_l[3]+200*line_l[1]), (0, 0, 255), 2)
+            cv2.line(img_bird_view, (IMG_W/2+line_r[2]-200*line_r[0], line_r[3]-200*line_r[1]), (IMG_W/2+line_r[2]+200*line_r[0], line_r[3]+200*line_r[1]), (0, 0, 255), 2)
 
             cv2.circle(img_bird_view, (int(cx1), int(cy1)), 10, (0, 255, 255), -1)
             cv2.circle(img_bird_view, (int(cx2), int(cy2)), 10, (255, 255, 255), -1)
