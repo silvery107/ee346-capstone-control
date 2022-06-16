@@ -25,14 +25,14 @@ def get_lane_theta(mask, kernel):
     contours, _ = cv2.findContours(mask_eroded, mode=cv2.RETR_EXTERNAL, method=cv2.CHAIN_APPROX_SIMPLE)[-2:]
     if contours:
         line_param = cv2.fitLine(contours[0], distType=cv2.DIST_L2, param=0, reps=0.01, aeps=0.01)
-        new_coord = rot_90.dot(np.array([line_param[0], line_param[1]],dtype=DTYPE).reshape((2,1)))
+        new_coord = rot_90.dot(np.asarray(line_param[:2], dtype=DTYPE).reshape((2,1)))
         new_coord = check_coord(new_coord) + 1e-5
         theta = np.arctan2(new_coord[1], new_coord[0])
         # print(np.abs(theta)-np.pi/2)
         if np.isclose(np.abs(theta), np.pi/2, 1e-4):
             theta = 0.0
 
-    return theta #, line_param
+    return theta, line_param
 
 def match_corner(img, templates):
 
