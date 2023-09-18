@@ -1,8 +1,12 @@
 # EE346 Capstone Control
 
+We achieved a multifunctional and integrated system that includes autonomous navigation, lane following and Aruco detection using TurtleBot3 Burger. Our system is designed for the competition of finishing a specified task sequence.
 
-There is the link to lab report website⭐https://sites.google.com/view/ee346-capstone-22s-cmdzyl/home
+For more details, please check our project ⭐[website](https://sites.google.com/view/ee346-capstone-22s-cmdzyl/home)!
 
+<img src="https://github.com/silvery107/ee346-capstone-control/assets/44640904/125b46d0-f42e-44a4-899e-8aafb4d5f622" width="450"/>
+
+<img src="https://github.com/silvery107/ee346-capstone-control/assets/44640904/480fc79c-ae49-4237-aa38-5725d4918bd1" width="350"/>
 
 ## Lane Following
 
