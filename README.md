@@ -1,4 +1,4 @@
-# EE346 Capstone Control
+# Turtlebot3 Lane Following and Navigation Capstone
 
 We achieved a multifunctional and integrated system that includes autonomous navigation, lane following and Aruco detection using TurtleBot3 Burger. Our system is designed for the competition of finishing a specified task sequence.
 
